@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# UV
+.venv/
+uv.lock.bak
+
+# Environments / secrets
+.env
+.env.local
+*.env
+
+# Data + models (track schemas in code, not blobs)
+data/raw/
+data/processed/
+data/external/
+models/*.joblib
+models/*.pkl
+models/*.json
+mlruns/
+*.db
+*.sqlite
+*.sqlite3
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Build
+dist/
+build/

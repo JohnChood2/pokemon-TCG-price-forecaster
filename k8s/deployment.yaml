@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pokemon-forecaster-api
+  labels:
+    app: pokemon-forecaster-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pokemon-forecaster-api
+  template:
+    metadata:
+      labels:
+        app: pokemon-forecaster-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/YOUR_GITHUB_USER/pokemon-price-forecaster:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: forecaster-secrets
+                  key: database_url
+            - name: POKEMONTCG_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: forecaster-secrets
+                  key: pokemontcg_api_key
+                  optional: true
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
