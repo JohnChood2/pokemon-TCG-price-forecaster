@@ -1,33 +1,116 @@
+# k8s/cronjob-ingest.yaml
+#
+# Kubernetes CronJob that runs the daily price ingest at 06:00 UTC.
+#
+# What it does
+# ------------
+# Spins up a single ephemeral pod, calls pokemon-ingest, and exits.
+# The pod fetches fresh card + price data from pokemontcg.io and appends
+# one price_snapshot row per (card_id, variant) to the database.
+#
+# Prerequisites
+# -------------
+# 1. Build and push the image:
+#      docker build -t ghcr.io/YOUR_GITHUB_USER/pokemon-price-forecaster:latest .
+#      docker push ghcr.io/YOUR_GITHUB_USER/pokemon-price-forecaster:latest
+#    (GitHub Actions does this automatically on every push to main — see
+#     .github/workflows/ci-cd.yml)
+#
+# 2. Create the Kubernetes Secret that holds sensitive config:
+#      kubectl create secret generic forecaster-secrets \
+#        --from-literal=database_url='postgresql://user:pass@host:5432/forecaster' \
+#        --from-literal=pokemontcg_api_key='YOUR_KEY'
+#    Omit pokemontcg_api_key if you're fine with the unauthenticated rate limit.
+#
+# 3. Apply this manifest:
+#      kubectl apply -f k8s/cronjob-ingest.yaml
+#
+# Tuning
+# ------
+# - Change `schedule` to adjust the run time (cron syntax, UTC).
+#   "0 6 * * *" = every day at 06:00 UTC.
+# - Adjust --batch-size to trade off memory vs DB round-trips.
+#   50 is a safe default for both SQLite (dev) and Postgres (prod).
+# - Add --query 'set.id:swsh1' (or any Lucene filter) to restrict which cards
+#   get ingested, e.g. if you only care about one set.
+# - Remove --limit entirely for a full nightly pull of all ~20k cards.
+#   Keep it during initial testing so the first run completes in seconds.
+#
+# concurrencyPolicy: Forbid ensures that if a previous run is still going
+# (rare, but possible if the API is slow) the new job is skipped rather than
+# overlapping, which would risk duplicate snapshot rows.
+
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: pokemon-ingest-daily
+  labels:
+    app: pokemon-forecaster
+    component: ingest
 spec:
-  # Once a day at 06:00 UTC. Adjust to taste.
+  # Run every day at 06:00 UTC. Adjust to taste.
   schedule: "0 6 * * *"
+
+  # Never run two ingest jobs at the same time — the unique constraint on
+  # (card_id, variant, snapshot_date) would reject duplicates anyway, but
+  # this avoids wasted API calls and unnecessary DB load.
   concurrencyPolicy: Forbid
+
+  # Keep the last 3 successful job records for debugging; only the last
+  # failed job (pod logs are invaluable when the API is down).
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
+
   jobTemplate:
     spec:
+      # Retry up to 2 times if the pod crashes (e.g. transient API outage).
       backoffLimit: 2
       template:
         spec:
           restartPolicy: OnFailure
           containers:
             - name: ingest
+              # Replace YOUR_GITHUB_USER with your GitHub username/org.
+              # GitHub Actions pushes a new image here on every merge to main.
               image: ghcr.io/YOUR_GITHUB_USER/pokemon-price-forecaster:latest
-              command: ["python", "-m", "pokemon_forecaster.cli.ingest"]
+              imagePullPolicy: Always
+
+              # Run the ingest CLI entrypoint directly.
+              # --batch-size 50  → commit every 50 cards (bounded memory)
+              # --query           → restrict to one set during ramp-up; remove
+              #                     once you want the full card catalogue.
+              command:
+                - python
+                - -m
+                - pokemon_forecaster.cli.ingest
+                - --batch-size
+                - "50"
+              # Uncomment and edit the lines below to restrict to a single set:
+              # args:
+              #   - --query
+              #   - "set.id:swsh1"
+
               env:
+                # Database connection string. In production, point this at
+                # Postgres (or Cloud SQL, RDS, etc.) rather than SQLite.
                 - name: DATABASE_URL
                   valueFrom:
-                    secretKeyRef: { name: forecaster-secrets, key: database_url }
+                    secretKeyRef:
+                      name: forecaster-secrets
+                      key: database_url
+
+                # Optional: higher rate limits from pokemontcg.io with a key.
                 - name: POKEMONTCG_API_KEY
                   valueFrom:
                     secretKeyRef:
                       name: forecaster-secrets
                       key: pokemontcg_api_key
-                      optional: true
+                      optional: true  # job still runs without it
+
               resources:
-                requests: { cpu: 200m, memory: 256Mi }
-                limits:   { cpu: 500m, memory: 512Mi }
+                requests:
+                  cpu: 200m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi

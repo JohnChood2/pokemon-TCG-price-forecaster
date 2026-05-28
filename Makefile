@@ -19,7 +19,7 @@ test:
 	uv run pytest
 
 ingest:
-	uv run pokemon-ingest --query 'set.id:swsh1' --limit 50
+	uv run pokemon-ingest --query 'set.id:swsh1' --batch-size 50 --limit 250
 
 train:
 	uv run pokemon-train --min-history 30
