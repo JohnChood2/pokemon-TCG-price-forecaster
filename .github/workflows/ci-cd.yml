@@ -16,7 +16,7 @@ jobs:
     name: Lint & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
@@ -47,7 +47,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -88,7 +88,7 @@ jobs:
   #   if: startsWith(github.ref, 'refs/tags/')
   #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v7
   #     - uses: azure/setup-kubectl@v4
   #     - run: echo "${{ secrets.KUBECONFIG }}" | base64 -d > kubeconfig
   #     - run: KUBECONFIG=./kubeconfig kubectl apply -f k8s/
