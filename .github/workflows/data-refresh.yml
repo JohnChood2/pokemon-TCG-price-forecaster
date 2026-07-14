@@ -1,0 +1,73 @@
+# Scheduled data refresh — pulls fresh Pokémon TCG card/price data on a cron
+# schedule instead of relying on someone remembering to run it manually.
+#
+# This runs the same `pokemon-ingest` CLI as the local `make ingest` target
+# and the Kubernetes CronJob in k8s/cronjob-ingest.yaml. Use whichever fits
+# your deployment:
+#   - k8s CronJob   → if you're already running the app in a cluster with a
+#                     persistent Postgres DB.
+#   - This workflow → if you don't have a cluster, or want ingestion decoupled
+#                     from infra. Point DATABASE_URL at a persistent DB
+#                     (managed Postgres, Turso, etc.) — GitHub Actions runners
+#                     are ephemeral, so a local SQLite file will NOT persist
+#                     between runs and this job would just discard its work.
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   DATABASE_URL        connection string for a persistent DB (required)
+#   POKEMONTCG_API_KEY  optional, but raises pokemontcg.io rate limits a lot
+
+name: Data refresh
+
+on:
+  schedule:
+    # Daily at 06:00 UTC — matches the default in k8s/cronjob-ingest.yaml.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      query:
+        description: 'Optional Lucene filter, e.g. "set.id:swsh1"'
+        required: false
+        default: ""
+      limit:
+        description: "Optional cap on cards processed"
+        required: false
+        default: ""
+
+# Don't let a slow run overlap with the next scheduled trigger — the unique
+# constraint on (card_id, variant, snapshot_date) would reject duplicates
+# anyway, but this avoids burning API calls for nothing.
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    name: Ingest fresh price data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install deps
+        run: uv sync --no-dev
+
+      - name: Run ingest
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
+        run: |
+          args="--batch-size 50"
+          if [ -n "${{ github.event.inputs.query }}" ]; then
+            args="$args --query \"${{ github.event.inputs.query }}\""
+          fi
+          if [ -n "${{ github.event.inputs.limit }}" ]; then
+            args="$args --limit ${{ github.event.inputs.limit }}"
+          fi
+          eval uv run pokemon-ingest $args
