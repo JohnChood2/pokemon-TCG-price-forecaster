@@ -36,7 +36,7 @@ Hyperparameters
 ---------------
 ``changepoint_prior_scale=0.05`` (default 0.05) controls how flexible the
 trend line is.  Lower = smoother trend, less risk of over-fitting short-term
-spikes.  For volatile collectibles you might want to experiment with 0.1–0.3
+spikes.  For volatile collectibles you might want to experiment with 0.1-0.3
 if the model consistently under-reacts to price shocks.
 
 Planned backends
@@ -94,7 +94,7 @@ class Forecaster(ABC):
         Parameters
         ----------
         horizon_days:
-            How many future days to forecast (1–90 per the API contract).
+            How many future days to forecast (1-90 per the API contract).
 
         Returns
         -------

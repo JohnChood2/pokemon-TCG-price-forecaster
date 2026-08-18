@@ -53,9 +53,9 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=PROJECT_ROOT / ".env",   # load from .env if present
+        env_file=PROJECT_ROOT / ".env",  # load from .env if present
         env_file_encoding="utf-8",
-        extra="ignore",                    # silently drop unknown env vars
+        extra="ignore",  # silently drop unknown env vars
     )
 
     # ------------------------------------------------------------------

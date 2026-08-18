@@ -93,7 +93,7 @@ def main() -> None:
 
     store = PriceStore()
     inserted = 0  # total price snapshot rows written this run
-    seen = 0      # total cards processed this run
+    seen = 0  # total cards processed this run
 
     logger.info(
         "Starting ingest | query=%r  batch_size=%d  limit=%s",
@@ -124,9 +124,7 @@ def main() -> None:
             # keeps the working set small.
             if seen % args.batch_size == 0:
                 session.commit()
-                logger.info(
-                    "Batch committed | cards=%d  snapshots_so_far=%d", seen, inserted
-                )
+                logger.info("Batch committed | cards=%d  snapshots_so_far=%d", seen, inserted)
 
             if args.limit and seen >= args.limit:
                 logger.info("--limit %d reached, stopping early.", args.limit)

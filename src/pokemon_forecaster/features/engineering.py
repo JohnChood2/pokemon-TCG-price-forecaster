@@ -115,7 +115,7 @@ def add_rolling_features(df: pd.DataFrame, target_col: str = "market") -> pd.Dat
     ``min_periods=max(2, w // 2)`` allows the rolling window to start
     computing once at least half the window is filled.  This reduces the
     number of NaN rows dropped during ``build_feature_frame`` — important
-    when you have only 30–60 rows of history.
+    when you have only 30-60 rows of history.
     """
     out = df.copy()
     for w in ROLLING_WINDOWS:
@@ -139,7 +139,7 @@ def add_calendar_features(df: pd.DataFrame, date_col: str = "snapshot_date") -> 
     pd.DataFrame
         Original DataFrame plus:
         - ``dow``        — day of week (0 = Monday, 6 = Sunday)
-        - ``month``      — month (1–12)
+        - ``month``      — month (1-12)
         - ``is_weekend`` — 1 if Saturday or Sunday, else 0
 
     Notes
@@ -150,7 +150,7 @@ def add_calendar_features(df: pd.DataFrame, date_col: str = "snapshot_date") -> 
     """
     out = df.copy()
     dt = pd.to_datetime(out[date_col])
-    out["dow"] = dt.dt.dayofweek           # 0 = Mon, 6 = Sun
+    out["dow"] = dt.dt.dayofweek  # 0 = Mon, 6 = Sun
     out["month"] = dt.dt.month
     out["is_weekend"] = (dt.dt.dayofweek >= 5).astype(int)
     return out
@@ -165,7 +165,7 @@ def add_set_features(
 
     ``days_since_release`` is consistently one of the top feature importances
     in trained XGBoost models.  Newly released cards trade at a significant
-    premium for the first 2–4 weeks as pack-opening hype drives demand.
+    premium for the first 2-4 weeks as pack-opening hype drives demand.
     After that, supply normalises and prices stabilise or decline.
 
     Parameters

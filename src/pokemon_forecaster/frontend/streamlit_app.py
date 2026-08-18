@@ -154,7 +154,7 @@ if submit:
         st.metric("Horizon (days)", data["horizon_days"])
         st.metric(
             "Forecast range (USD)",
-            f"${df['yhat'].min():.2f} – ${df['yhat'].max():.2f}",
+            f"${df['yhat'].min():.2f} - ${df['yhat'].max():.2f}",
         )
         st.dataframe(
             df[["ds", "yhat", "yhat_lower", "yhat_upper"]].rename(

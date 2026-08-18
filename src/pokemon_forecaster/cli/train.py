@@ -22,7 +22,7 @@ next request, rather than training on demand (which adds latency).
 
 Why pre-train?
 --------------
-On-demand training in the API (the current fallback) adds 2–10 seconds per
+On-demand training in the API (the current fallback) adds 2-10 seconds per
 first request.  Pre-training during the nightly batch window means all requests
 serve from cached artefacts and respond in milliseconds.
 
@@ -90,8 +90,8 @@ def main() -> None:
     store = PriceStore()
     settings.model_dir.mkdir(parents=True, exist_ok=True)
 
-    trained = 0   # models successfully saved
-    skipped = 0   # cards skipped (insufficient data or training failure)
+    trained = 0  # models successfully saved
+    skipped = 0  # cards skipped (insufficient data or training failure)
 
     # Step 1: pull all (card_id, variant, date, price) rows for the chosen variant.
     # We load everything into a DataFrame first so we can group and filter in
@@ -129,7 +129,7 @@ def main() -> None:
         try:
             # Prophet expects columns named exactly "ds" and "y".
             model.fit(group[["ds", "y"]])
-        except Exception as e:  # noqa: BLE001 — Prophet surfaces many internal errors
+        except Exception as e:
             logger.warning("Failed to train %s/%s: %s", card_id, variant, e)
             skipped += 1
             continue

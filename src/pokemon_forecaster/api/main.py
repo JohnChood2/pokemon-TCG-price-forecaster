@@ -100,7 +100,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Pokémon TCG Price Forecaster",
     description=(
-        "Forecast Pokémon TCG card prices 1–90 days into the future using "
+        "Forecast Pokémon TCG card prices 1-90 days into the future using "
         "historical TCGPlayer market data.  Powered by Prophet."
     ),
     version=__version__,
@@ -139,7 +139,7 @@ def predict(req: ForecastRequest) -> ForecastResponse:
     variant:
         TCGPlayer price tier, e.g. ``"holofoil"`` (default).
     horizon_days:
-        How many days ahead to forecast (1–90, default 14).
+        How many days ahead to forecast (1-90, default 14).
 
     Response (see ``ForecastResponse`` schema)
     ------------------------------------------
@@ -184,10 +184,8 @@ def predict(req: ForecastRequest) -> ForecastResponse:
         logger.info("Loaded cached model for %s/%s", req.card_id, req.variant)
     else:
         # Slow path — train on demand, save for next time.
-        # This adds ~2–10 seconds of latency on the first request for a card.
-        logger.info(
-            "No cached model for %s/%s — training on demand", req.card_id, req.variant
-        )
+        # This adds ~2-10 seconds of latency on the first request for a card.
+        logger.info("No cached model for %s/%s — training on demand", req.card_id, req.variant)
         model = ProphetForecaster()
         model.fit(history)
         model.save(path)

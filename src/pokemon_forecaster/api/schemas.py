@@ -90,7 +90,7 @@ class ForecastRequest(BaseModel):
         default=14,
         ge=1,
         le=90,
-        description="Days to forecast ahead (1–90).",
+        description="Days to forecast ahead (1-90).",
     )
 
 

@@ -81,6 +81,7 @@ logger = logging.getLogger(__name__)
 # ORM models
 # ---------------------------------------------------------------------------
 
+
 class Base(DeclarativeBase):
     """Shared declarative base — all ORM models inherit from this."""
 
@@ -97,10 +98,10 @@ class Card(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     name: Mapped[str] = mapped_column(String)
-    set_id: Mapped[str] = mapped_column(String, index=True)   # e.g. "swsh1"
-    set_name: Mapped[str] = mapped_column(String)              # e.g. "Sword & Shield"
-    rarity: Mapped[str | None] = mapped_column(String, nullable=True)   # "Rare Holo", etc.
-    number: Mapped[str | None] = mapped_column(String, nullable=True)   # collector number
+    set_id: Mapped[str] = mapped_column(String, index=True)  # e.g. "swsh1"
+    set_name: Mapped[str] = mapped_column(String)  # e.g. "Sword & Shield"
+    rarity: Mapped[str | None] = mapped_column(String, nullable=True)  # "Rare Holo", etc.
+    number: Mapped[str | None] = mapped_column(String, nullable=True)  # collector number
     release_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     # Bidirectional relationship — access all price history via card.snapshots.
@@ -148,6 +149,7 @@ class PriceSnapshot(Base):
 # ---------------------------------------------------------------------------
 # Data-access object
 # ---------------------------------------------------------------------------
+
 
 class PriceStore:
     """DAO (Data Access Object) for the card + price-snapshot tables.
@@ -217,9 +219,7 @@ class PriceStore:
 
         # Parse the release date from the API's "YYYY/MM/DD" string format.
         release_str = card_payload.get("set", {}).get("releaseDate")
-        release_date = (
-            datetime.strptime(release_str, "%Y/%m/%d").date() if release_str else None
-        )
+        release_date = datetime.strptime(release_str, "%Y/%m/%d").date() if release_str else None
 
         fields = {
             "id": card_payload["id"],

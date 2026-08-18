@@ -38,7 +38,7 @@ def synthetic_price(t: int, total_days: int, base: float, seed: int) -> float:
       - Linear trend: +20% over the window
       - Weekly seasonality: ±5% sinusoid (Friday peaks)
       - Hype bump: +40% spike at ~2/3 through, decays exponentially over ~2 weeks
-      - Gaussian noise: σ = 3%
+      - Gaussian noise: sigma = 3%
     """
     rng = random.Random(seed + t)  # deterministic per-day
     trend = 1.0 + 0.20 * (t / max(total_days, 1))
@@ -75,7 +75,10 @@ def main() -> None:
             )
         logger.info(
             "Seeding %d days of %s prices for %s (%s)",
-            args.days, args.variant, args.card_id, card.name,
+            args.days,
+            args.variant,
+            args.card_id,
+            card.name,
         )
 
         # Don't violate the (card_id, variant, snapshot_date) unique constraint.
@@ -85,7 +88,9 @@ def main() -> None:
                     PriceSnapshot.card_id == args.card_id,
                     PriceSnapshot.variant == args.variant,
                 )
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         )
 
         for offset in range(args.days, 0, -1):
