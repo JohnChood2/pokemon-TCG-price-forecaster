@@ -4,7 +4,7 @@
 ############################
 # Stage 1: builder
 ############################
-FROM python:3.11-slim AS builder
+FROM python:3.14-slim AS builder
 
 # Install uv from the official distroless image
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
@@ -30,7 +30,7 @@ RUN uv sync --frozen --no-dev --no-editable --extra frontend || uv sync --no-dev
 ############################
 # Stage 2: runtime
 ############################
-FROM python:3.11-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
