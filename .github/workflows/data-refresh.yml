@@ -40,6 +40,10 @@ concurrency:
   group: data-refresh
   cancel-in-progress: false
 
+# This job only reads the repo; it pushes nothing back.
+permissions:
+  contents: read
+
 jobs:
   ingest:
     name: Ingest fresh price data
@@ -62,12 +66,19 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
+          # Dispatch inputs are passed through the environment, never
+          # interpolated into the script body. A ${{ }} expression inside a
+          # `run:` block is substituted before bash ever sees it, so a crafted
+          # input string can execute arbitrary commands on the runner.
+          INPUT_QUERY: ${{ inputs.query }}
+          INPUT_LIMIT: ${{ inputs.limit }}
         run: |
-          args="--batch-size 50"
-          if [ -n "${{ github.event.inputs.query }}" ]; then
-            args="$args --query \"${{ github.event.inputs.query }}\""
+          set -euo pipefail
+          args=(--batch-size 50)
+          if [ -n "${INPUT_QUERY:-}" ]; then
+            args+=(--query "$INPUT_QUERY")
           fi
-          if [ -n "${{ github.event.inputs.limit }}" ]; then
-            args="$args --limit ${{ github.event.inputs.limit }}"
+          if [ -n "${INPUT_LIMIT:-}" ]; then
+            args+=(--limit "$INPUT_LIMIT")
           fi
-          eval uv run pokemon-ingest $args
+          uv run pokemon-ingest "${args[@]}"
