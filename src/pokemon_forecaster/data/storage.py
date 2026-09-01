@@ -11,8 +11,7 @@ Two tables:
 
 ``price_snapshots``
     The time-series table — one row per (card_id, variant, snapshot_date).
-    ``variant`` is the TCGPlayer price tier: 'holofoil', 'normal',
-    'reverseHolofoil', '1stEditionHolofoil', etc.
+    ``variant`` is the TCGPlayer price tier: 'holofoil', 'normal', 'reverseHolofoil', etc.
     ``market`` is the TCGPlayer market price in USD at that snapshot date.
 
     A ``UniqueConstraint`` on (card_id, variant, snapshot_date) means the ingest
@@ -185,7 +184,17 @@ class PriceStore:
         """
         from pathlib import Path
 
-        url = database_url or settings.database_url
+        # Prefer an explicit argument; fall back to the configured settings.
+        url = database_url if database_url is not None else settings.database_url
+
+        # Defensive: treat empty/whitespace string as unset. This prevents an
+        # empty env var from overriding the intended default in pydantic.
+        if not isinstance(url, str) or not url.strip():
+            raise RuntimeError(
+                "Invalid DATABASE_URL: value is empty. Set DATABASE_URL to a valid "
+                "SQLAlchemy URL (e.g. 'sqlite:///data/prices.db' or 'postgresql://user:pass@host/db'), "
+                "or remove the DATABASE_URL env var to use the built-in default."
+            )
 
         # SQLite's ``ATTACH`` will silently fail if the parent directory doesn't
         # exist, so we create it here.  Postgres doesn't need this.
