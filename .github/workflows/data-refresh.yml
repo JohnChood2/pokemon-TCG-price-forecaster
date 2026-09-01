@@ -64,8 +64,6 @@ jobs:
 
       - name: Run ingest
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          POKEMONTCG_API_KEY: ${{ secrets.POKEMONTCG_API_KEY }}
           # Dispatch inputs are passed through the environment, never
           # interpolated into the script body. A ${{ }} expression inside a
           # `run:` block is substituted before bash ever sees it, so a crafted
@@ -74,6 +72,19 @@ jobs:
           INPUT_LIMIT: ${{ inputs.limit }}
         run: |
           set -euo pipefail
+
+          # Export DATABASE_URL only if the secret is provided. This prevents
+          # an empty secret value from creating an empty env var which would
+          # override the application's default and cause SQLAlchemy to fail.
+          if [ -n "${{ secrets.DATABASE_URL }}" ]; then
+            export DATABASE_URL="${{ secrets.DATABASE_URL }}"
+          fi
+
+          # Export API key only when set (it's optional).
+          if [ -n "${{ secrets.POKEMONTCG_API_KEY }}" ]; then
+            export POKEMONTCG_API_KEY="${{ secrets.POKEMONTCG_API_KEY }}"
+          fi
+
           args=(--batch-size 50)
           if [ -n "${INPUT_QUERY:-}" ]; then
             args+=(--query "$INPUT_QUERY")
