@@ -11,7 +11,7 @@ license = { text = "MIT" }
 dependencies = [
     # Data + storage
     "pandas>=2.2",
-    "numpy>=1.26,<2.1",        # prophet/xgboost compat ceiling
+    "numpy>=1.26,<2.5",        # prophet/xgboost compat ceiling
     "sqlalchemy>=2.0",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
